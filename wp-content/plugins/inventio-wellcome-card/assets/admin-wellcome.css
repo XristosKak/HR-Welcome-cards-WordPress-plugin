@@ -1,0 +1,22 @@
+/* Πεδία κειμένου 1–5: όριο χαρακτήρων */
+.inventio-team-body-field-wrap.inventio-team-body-at-limit textarea,
+.inventio-team-body-field-wrap textarea.inventio-team-body-at-limit {
+	border-color: #d63638 !important;
+	box-shadow: 0 0 0 1px #d63638;
+	outline: none;
+}
+
+.inventio-team-body-limit-msg {
+	display: block;
+	margin-top: 4px;
+	color: #d63638;
+	font-weight: 600;
+}
+
+.inventio-team-body-limit-msg[hidden] {
+	display: none !important;
+}
+
+.inventio-team-body-count {
+	font-variant-numeric: tabular-nums;
+}
