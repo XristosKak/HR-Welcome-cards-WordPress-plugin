@@ -59,25 +59,36 @@ class Inventio_Wellcome_Renderer {
 		$defaults = array(
 			'template_path'           => '',
 			'photo_path'              => '',
-			'headline'                => 'WELLCOME ABOARD',
+			'canvas_title'            => '',
+			'headline'                => '',
 			'headline_sub'            => '',
 			'headline_preserve_case'  => false,
 			'name_line_1'             => '',
 			'name_line_2'             => '',
 			'role_line_1'             => '',
 			'role_line_2'             => '',
-			'footer_text'             => '',
 			'split_ratio'             => 0.42,
 			'layout'                  => 'split_aboard',
 			'jpeg_quality'            => 92,
 			'font_path'               => INVENTIO_WELCOME_PLUGIN_DIR . 'assets/fonts/NotoSans-Bold.ttf',
-			'scale_headline'          => 0.062,
-			'scale_name'              => 0.052,
-			'scale_role'              => 0.036,
-			'scale_footer'            => 0.026,
+			'scale_headline'          => 0.052,
+			'scale_name'              => 0.032,
+			'scale_role'              => 0.022,
+			// Split Aboard — κείμενα: κάθετο Y, μέγεθος γραμματοσειράς και max width ως ποσοστά καμβά.
+			'split_title_y_ratio'     => 0.09,
+			'split_title_scale_ratio' => 0.052,
+			'split_title_max_w_ratio' => 0.9,
+			'split_name_y_ratio'      => 0.38,
+			'split_name_scale_ratio'  => 0.032,
+			'split_name_max_w_ratio'  => 0.45,
+			'split_name_line_gap_ratio'  => 0.012,
+			'split_name_after_gap_ratio' => 0.018,
+			'split_role_scale_ratio'     => 0.022,
+			'split_role_max_w_ratio'     => 0.42,
+			'split_role_line_gap_ratio'  => 0.008,
 			'photo_max_w_ratio'       => 0.88,
-			'photo_max_h_ratio'       => 0.65,
-			'photo_bottom_gap'        => 0.04,
+			'photo_max_h_ratio'       => 0.8,
+			'photo_bottom_gap'        => 0,
 			// Gradient (team_portrait) — θέση/μέγεθος φωτογραφίας: μέθοδος overlay_photo_team().
 			// team_photo_anchor_y_ratio : 0 = πάνω στη ζώνη, 1 = κάτω (μεγαλύτερη τιμή → πιο χαμηλά).
 			// team_photo_fit_max_w_ratio / team_photo_fit_max_h_ratio : μέγιστο πλάτος/ύψος ως ποσοστό 1080×1350.
@@ -116,27 +127,27 @@ class Inventio_Wellcome_Renderer {
 			'team_body_right_x_ratio'        => 0.535,
 			'team_body_col_max_w_ratio'     => 0.43,
 			// Κάθε μπλοκ 1–5: δικό του μέγεθος (scale), πλάτος wrap, κενά πριν/μετά (ποσοστά ύψους).
-			'team_body_paragraph_gap_ratio'  => 0.022,
-			'team_body_1_max_w_ratio'        => 0.35,
-			'team_body_1_scale_ratio'      => 0.018,
-			'team_body_1_before_gap_ratio' => 0.014,
+			'team_body_paragraph_gap_ratio'  => 0.011,
+			'team_body_1_max_w_ratio'        => 0.25,
+			'team_body_1_scale_ratio'      => 0.017,
+			'team_body_1_before_gap_ratio' => 0.004,
 			'team_body_1_after_gap_ratio'  => 0.002,
-			'team_body_2_max_w_ratio'      => 0.35,
-			'team_body_2_scale_ratio'      => 0.013,
-			'team_body_2_before_gap_ratio' => 0.014,
+			'team_body_2_max_w_ratio'      => 0.24,
+			'team_body_2_scale_ratio'      => 0.017,
+			'team_body_2_before_gap_ratio' => 0.011,
 			'team_body_2_after_gap_ratio'  => 0.04,
-			'team_body_3_max_w_ratio'      => 0.15,
-			'team_body_3_scale_ratio'      => 0.019,
+			'team_body_3_max_w_ratio'      => 0.24,
+			'team_body_3_scale_ratio'      => 0.018,
 			'team_body_3_before_gap_ratio' => 0,
 			'team_body_3_after_gap_ratio'  => 0.018,
-			'team_body_4_max_w_ratio'      => 0.1,
-			'team_body_4_scale_ratio'      => 0.016,
+			'team_body_4_max_w_ratio'      => 0.25,
+			'team_body_4_scale_ratio'      => 0.017,
 			'team_body_4_before_gap_ratio' => 0.012,
 			'team_body_4_after_gap_ratio'  => 0.022,
-			'team_body_5_max_w_ratio'      => 0.1,
+			'team_body_5_max_w_ratio'      => 0.25,
 			'team_body_5_scale_ratio'      => 0.018,
 			'team_body_5_before_gap_ratio' => 0.01,
-			'team_body_5_after_gap_ratio'  => 0.026,
+			'team_body_5_after_gap_ratio'  => 0.26,
 			'team_body_start_y_ratio'        => 0.48,
 			'scale_team_body'                => 0.019,
 			'team_photo_col_w_ratio'         => 0.44,
@@ -149,6 +160,9 @@ class Inventio_Wellcome_Renderer {
 
 		$config = wp_parse_args( $args, $defaults );
 		$config = apply_filters( 'inventio_wellcome_render_config', $config );
+		if ( '' === trim( (string) $config['canvas_title'] ) && '' !== trim( (string) $config['headline'] ) ) {
+			$config['canvas_title'] = (string) $config['headline'];
+		}
 
 		for ( $ti = 1; $ti <= 5; $ti++ ) {
 			$bk = 'team_body_' . $ti;
@@ -281,42 +295,47 @@ class Inventio_Wellcome_Renderer {
 
 		$font = $config['font_path'];
 
-		$headline_size = max( 12, (int) round( $w * (float) $config['scale_headline'] ) );
-		$headline_text = self::format_headline( (string) $config['headline'], (bool) $config['headline_preserve_case'] );
-		self::draw_centered_line( $canvas, $font, $headline_size, $white, (int) round( $w / 2 ), (int) round( $h * 0.09 ), $headline_text );
+		$headline_size = max( 12, (int) round( $w * (float) $config['split_title_scale_ratio'] ) );
+		$headline_text = self::format_headline( (string) $config['canvas_title'], (bool) $config['headline_preserve_case'] );
+		self::draw_wrapped_block_center(
+			$canvas,
+			$font,
+			$headline_size,
+			$white,
+			(int) round( $w / 2 ),
+			(int) round( $h * (float) $config['split_title_y_ratio'] ),
+			$headline_text,
+			self::ratio_to_px( $w, $config['split_title_max_w_ratio'], 80 )
+		);
 
-		$name_size   = max( 11, (int) round( $w * (float) $config['scale_name'] ) );
-		$role_size   = max( 10, (int) round( $w * (float) $config['scale_role'] ) );
-		$footer_size = max( 9, (int) round( $w * (float) $config['scale_footer'] ) );
+		$name_size = max( 11, (int) round( $w * (float) $config['split_name_scale_ratio'] ) );
+		$role_size = max( 10, (int) round( $w * (float) $config['split_role_scale_ratio'] ) );
 
-		$cursor_y = (int) round( $h * 0.38 );
+		$cursor_y    = (int) round( $h * (float) $config['split_name_y_ratio'] );
+		$name_max_w  = self::ratio_to_px( $w, $config['split_name_max_w_ratio'], 80 );
+		$role_max_w  = self::ratio_to_px( $w, $config['split_role_max_w_ratio'], 80 );
+		$name_gap_px = (int) round( $h * (float) $config['split_name_line_gap_ratio'] );
+		$role_gap_px = (int) round( $h * (float) $config['split_role_line_gap_ratio'] );
 
 		$nl1 = self::format_name_role( (string) $config['name_line_1'] );
 		$nl2 = self::format_name_role( (string) $config['name_line_2'] );
 		if ( '' !== trim( $nl1 ) ) {
-			self::draw_centered_line( $canvas, $font, $name_size, $white, $right_center_x, $cursor_y, $nl1 );
-			$cursor_y += self::line_height( $name_size, $font, $nl1 ) + (int) round( $h * 0.012 );
+			$cursor_y = self::draw_wrapped_block_center( $canvas, $font, $name_size, $white, $right_center_x, $cursor_y, $nl1, $name_max_w );
+			$cursor_y += $name_gap_px;
 		}
 		if ( '' !== trim( $nl2 ) ) {
-			self::draw_centered_line( $canvas, $font, $name_size, $white, $right_center_x, $cursor_y, $nl2 );
-			$cursor_y += self::line_height( $name_size, $font, $nl2 ) + (int) round( $h * 0.018 );
+			$cursor_y = self::draw_wrapped_block_center( $canvas, $font, $name_size, $white, $right_center_x, $cursor_y, $nl2, $name_max_w );
+			$cursor_y += (int) round( $h * (float) $config['split_name_after_gap_ratio'] );
 		}
 
 		$rl1 = self::format_name_role( (string) $config['role_line_1'] );
 		$rl2 = self::format_name_role( (string) $config['role_line_2'] );
 		if ( '' !== trim( $rl1 ) ) {
-			self::draw_centered_line( $canvas, $font, $role_size, $white, $right_center_x, $cursor_y, $rl1 );
-			$cursor_y += self::line_height( $role_size, $font, $rl1 ) + (int) round( $h * 0.008 );
+			$cursor_y = self::draw_wrapped_block_center( $canvas, $font, $role_size, $white, $right_center_x, $cursor_y, $rl1, $role_max_w );
+			$cursor_y += $role_gap_px;
 		}
 		if ( '' !== trim( $rl2 ) ) {
-			self::draw_centered_line( $canvas, $font, $role_size, $white, $right_center_x, $cursor_y, $rl2 );
-		}
-
-		$footer = trim( (string) $config['footer_text'] );
-		if ( '' !== $footer ) {
-			$footer_display    = self::maybe_upper_footer( $footer );
-			$footer_baseline_y = (int) round( $h * 0.88 );
-			self::draw_centered_line( $canvas, $font, $footer_size, $white, $right_center_x, $footer_baseline_y, $footer_display );
+			self::draw_wrapped_block_center( $canvas, $font, $role_size, $white, $right_center_x, $cursor_y, $rl2, $role_max_w );
 		}
 	}
 
@@ -453,15 +472,6 @@ class Inventio_Wellcome_Renderer {
 			$block_sz  = self::team_body_block_scale_px( $w, $config, $i );
 			$y_r       = self::draw_wrapped_block_left( $canvas, $font, $block_sz, $col, $rx, $y_r, $txt, $max_r );
 			$y_r      += self::team_body_block_after_gap_px( $h, $config, $i );
-		}
-
-		$footer_size = max( 9, (int) round( $w * (float) $config['scale_footer'] ) );
-		$footer      = trim( (string) $config['footer_text'] );
-		if ( '' !== $footer ) {
-			$footer_display    = self::maybe_upper_footer( $footer );
-			$footer_baseline_y = (int) round( $h * 0.9 );
-			$cx                = (int) round( $w / 2 );
-			self::draw_centered_line( $canvas, $font, $footer_size, $white, $cx, $footer_baseline_y, $footer_display );
 		}
 	}
 
@@ -766,6 +776,11 @@ class Inventio_Wellcome_Renderer {
 		return (int) round( abs( $bbox[1] - $bbox[7] ) );
 	}
 
+	private static function ratio_to_px( $base_px, $ratio, $min_px ) {
+		$px = (int) round( (int) $base_px * (float) $ratio );
+		return max( (int) $min_px, $px );
+	}
+
 	private static function upper_text( $text ) {
 		if ( function_exists( 'mb_convert_case' ) ) {
 			return mb_convert_case( trim( $text ), MB_CASE_UPPER, 'UTF-8' );
@@ -861,6 +876,68 @@ class Inventio_Wellcome_Renderer {
 	 * @param string $font
 	 * @param int    $size
 	 * @param string $text
+	 * @return int|null
+	 */
+	private static function text_width_px( $font, $size, $text ) {
+		$box = imagettfbbox( $size, 0, $font, (string) $text );
+		if ( false === $box ) {
+			return null;
+		}
+		return abs( $box[2] - $box[0] );
+	}
+
+	/**
+	 * @param string $text
+	 * @return string[]
+	 */
+	private static function split_text_chars( $text ) {
+		$chars = preg_split( '//u', (string) $text, -1, PREG_SPLIT_NO_EMPTY );
+		if ( is_array( $chars ) && array() !== $chars ) {
+			return $chars;
+		}
+		return str_split( (string) $text );
+	}
+
+	/**
+	 * Breaks oversized words so width limits still apply to pasted/test text with no spaces.
+	 *
+	 * @param string $font
+	 * @param int    $size
+	 * @param string $word
+	 * @param int    $max_width_px
+	 * @return string[]
+	 */
+	private static function split_word_for_width( $font, $size, $word, $max_width_px ) {
+		$chars = self::split_text_chars( $word );
+		if ( count( $chars ) <= 1 ) {
+			return array( (string) $word );
+		}
+
+		$chunks = array();
+		$chunk  = '';
+		foreach ( $chars as $char ) {
+			$try = $chunk . $char;
+			$tw  = self::text_width_px( $font, $size, $try );
+			if ( null === $tw || $tw <= $max_width_px || '' === $chunk ) {
+				$chunk = $try;
+				continue;
+			}
+
+			$chunks[] = $chunk;
+			$chunk    = $char;
+		}
+
+		if ( '' !== $chunk ) {
+			$chunks[] = $chunk;
+		}
+
+		return array() === $chunks ? array( (string) $word ) : $chunks;
+	}
+
+	/**
+	 * @param string $font
+	 * @param int    $size
+	 * @param string $text
 	 * @param int    $max_width_px
 	 * @return string[]
 	 */
@@ -876,23 +953,30 @@ class Inventio_Wellcome_Renderer {
 		$lines = array();
 		$line  = '';
 		foreach ( $words as $word ) {
-			$try = '' === $line ? $word : $line . ' ' . $word;
-			$box = imagettfbbox( $size, 0, $font, $try );
-			if ( false === $box ) {
-				$line = $try;
-				continue;
+			$word_parts = array( $word );
+			$word_width = self::text_width_px( $font, $size, $word );
+			if ( null !== $word_width && $word_width > $max_width_px ) {
+				$word_parts = self::split_word_for_width( $font, $size, $word, $max_width_px );
 			}
-			$tw = abs( $box[2] - $box[0] );
-			if ( $tw > $max_width_px && '' === $line ) {
-				$lines[] = $word;
-				$line    = '';
-				continue;
-			}
-			if ( $tw <= $max_width_px || '' === $line ) {
-				$line = $try;
-			} else {
-				$lines[] = $line;
-				$line    = $word;
+
+			foreach ( $word_parts as $word_part ) {
+				$try = '' === $line ? $word_part : $line . ' ' . $word_part;
+				$tw  = self::text_width_px( $font, $size, $try );
+				if ( null === $tw ) {
+					$line = $try;
+					continue;
+				}
+				if ( $tw > $max_width_px && '' === $line ) {
+					$lines[] = $word_part;
+					$line    = '';
+					continue;
+				}
+				if ( $tw <= $max_width_px || '' === $line ) {
+					$line = $try;
+				} else {
+					$lines[] = $line;
+					$line    = $word_part;
+				}
 			}
 		}
 		if ( '' !== $line ) {
@@ -928,10 +1012,16 @@ class Inventio_Wellcome_Renderer {
 		return $y;
 	}
 
-	private static function maybe_upper_footer( $text ) {
-		if ( preg_match( '/\p{Greek}/u', $text ) ) {
-			return trim( $text );
+	private static function draw_wrapped_block_center( $canvas, $font, $size, $color, $center_x, $start_y, $text, $max_width_px ) {
+		$lines = self::wrap_lines_for_width( $font, $size, $text, $max_width_px );
+		$y     = $start_y;
+		$extra_leading = max( 8, (int) round( $size * 0.38 ) );
+		foreach ( $lines as $ln ) {
+			self::draw_centered_line( $canvas, $font, $size, $color, $center_x, $y, $ln );
+			$line_h = self::line_height( $size, $font, $ln );
+			$line_h = max( $line_h, (int) round( $size * 1.12 ) );
+			$y     += $line_h + $extra_leading;
 		}
-		return self::upper_text( $text );
+		return $y;
 	}
 }

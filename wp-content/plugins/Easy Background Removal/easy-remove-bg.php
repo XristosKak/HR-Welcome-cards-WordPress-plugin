@@ -64,8 +64,9 @@ class Remove_BG_Plugin {
     }
 
     public function output_format_field_html() {
-        $value = get_option($this->option_format, 'webp');
+        $value = get_option($this->option_format, 'png');
         echo '<select name="' . esc_attr($this->option_format) . '">
+                <option value="png"' . selected($value, 'png', false) . '>PNG</option>
                 <option value="webp"' . selected($value, 'webp', false) . '>WEBP</option>
                 <option value="jpeg"' . selected($value, 'jpeg', false) . '>JPEG</option>
               </select>';
@@ -85,11 +86,17 @@ public function settings_page_html() {
 
 
     public function enqueue_scripts($hook) {
-        if ('upload.php' !== $hook) return;
+        if (!in_array($hook, ['upload.php', 'post.php'], true)) return;
         wp_enqueue_script('rbg-script', plugin_dir_url(__FILE__) . 'rbg-script.js', ['jquery'], null, true);
         wp_localize_script('rbg-script', 'rbg_ajax_obj', [
             'ajax_url' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('rbg_nonce')
+            'nonce' => wp_create_nonce('rbg_nonce'),
+            'removing_text' => __('Removing...', 'remove-bg'),
+            'done_text' => __('Done', 'remove-bg'),
+            'button_text' => __('Remove BG', 'remove-bg'),
+            'edit_button_text' => __('Remove BG', 'remove-bg'),
+            'error_text' => __('Error', 'remove-bg'),
+            'new_image_text' => __('New image', 'remove-bg'),
         ]);
     }
 
@@ -103,15 +110,26 @@ public function settings_page_html() {
 public function ajax_remove_bg() {
     check_ajax_referer('rbg_nonce');
 
+    if (!current_user_can('upload_files')) {
+        wp_send_json_error('You do not have permission.');
+    }
+
     $image_id = intval($_POST['image_id']);
     $image_path = get_attached_file($image_id);
 
-    if (!file_exists($image_path)) {
+    if (!$image_path || !file_exists($image_path)) {
         wp_send_json_error('Image file not found.');
     }
 
-    $api_key = get_option($this->option_key);
-    $output_format = get_option($this->option_format, 'webp');
+    $api_key = trim((string) get_option($this->option_key));
+    if ($api_key === '') {
+        wp_send_json_error('Missing Remove.bg API key. Add it in Settings > Remove.bg.');
+    }
+
+    $output_format = get_option($this->option_format, 'png');
+    if (!in_array($output_format, ['png', 'webp', 'jpeg'], true)) {
+        $output_format = 'png';
+    }
 
     $response = $this->send_image_to_api($image_path, $api_key, $output_format);
 
@@ -120,12 +138,14 @@ public function ajax_remove_bg() {
     }
 
     $upload_dir = wp_upload_dir();
-    $ext = ($output_format === 'jpeg') ? 'jpg' : 'webp';
+    $ext = ($output_format === 'jpeg') ? 'jpg' : $output_format;
     $base_filename = pathinfo($image_path, PATHINFO_FILENAME);
-    $filename = 'no-bg-' . $base_filename . '.' . $ext;
+    $filename = wp_unique_filename($upload_dir['path'], 'no-bg-' . $base_filename . '.' . $ext);
     $filepath = $upload_dir['path'] . '/' . $filename;
 
-    file_put_contents($filepath, $response);
+    if (false === file_put_contents($filepath, $response)) {
+        wp_send_json_error('Could not save processed image.');
+    }
 
     // === Insert in media library ===
     $wp_filetype = wp_check_filetype($filename, null);
@@ -144,7 +164,11 @@ public function ajax_remove_bg() {
     wp_update_attachment_metadata($attach_id, $attach_data);
 
     $url = wp_get_attachment_url($attach_id);
-    wp_send_json_success(['url' => $url]);
+    wp_send_json_success([
+        'id' => $attach_id,
+        'url' => $url,
+        'editUrl' => get_edit_post_link($attach_id, 'raw'),
+    ]);
 }
 
 

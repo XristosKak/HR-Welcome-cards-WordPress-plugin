@@ -412,10 +412,6 @@ class Inventio_Wellcome_Admin {
 					</tr>
 					<?php endfor; ?>
 					<tr>
-						<th scope="row"><label for="footer_text"><?php echo esc_html__( 'Κείμενο κάτω (π.χ. μήνυμα)', 'inventio-wellcome-card' ); ?></label></th>
-						<td><input name="footer_text" id="footer_text" type="text" class="regular-text" value="" /></td>
-					</tr>
-					<tr>
 						<th scope="row"><?php echo esc_html__( 'Φωτογραφία προσώπου', 'inventio-wellcome-card' ); ?></th>
 						<td>
 							<input type="hidden" name="<?php echo esc_attr( self::FIELD_EMPLOYEE_PHOTO_ATTACHMENT ); ?>" id="inventio-employee-photo-id" value="0" />
@@ -579,6 +575,7 @@ class Inventio_Wellcome_Admin {
 			'photo_path'             => $photo_path,
 			'split_ratio'            => $split,
 			'layout'                 => $layout,
+			'canvas_title'           => $headline,
 			'headline'               => $headline,
 			'headline_sub'           => $headline_sub,
 			'headline_preserve_case' => ! empty( $pdef['headline_preserve_case'] ),
@@ -586,7 +583,6 @@ class Inventio_Wellcome_Admin {
 			'name_line_2'            => isset( $_POST['name_line_2'] ) ? sanitize_text_field( wp_unslash( $_POST['name_line_2'] ) ) : '',
 			'role_line_1'            => isset( $_POST['role_line_1'] ) ? sanitize_text_field( wp_unslash( $_POST['role_line_1'] ) ) : '',
 			'role_line_2'            => isset( $_POST['role_line_2'] ) ? sanitize_text_field( wp_unslash( $_POST['role_line_2'] ) ) : '',
-			'footer_text'            => isset( $_POST['footer_text'] ) ? sanitize_text_field( wp_unslash( $_POST['footer_text'] ) ) : '',
 		);
 
 		if ( 'team_portrait' === $layout ) {

@@ -32,7 +32,7 @@ class Inventio_Wellcome_Presets {
 				'label'                  => __( 'Template «WELLCOME ABOARD» (σχίσιμο 50/50 · καμβάς 1080×1350)', 'inventio-wellcome-card' ),
 				'layout'                 => 'split_aboard',
 				'split_ratio'            => 0.5,
-				'headline'               => 'WELLCOME ABOARD',
+				'headline'               => '',
 				'headline_sub'           => '',
 				'headline_preserve_case' => false,
 			),
